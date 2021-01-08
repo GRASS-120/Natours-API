@@ -1,0 +1,23 @@
+{
+  "name": "natours",
+  "version": "1.0.0",
+  "description": "Learning Node.js, Express and MongoDB",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GRASS-120/Natours-API.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GRASS-120/Natours-API/issues"
+  },
+  "homepage": "https://github.com/GRASS-120/Natours-API#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
