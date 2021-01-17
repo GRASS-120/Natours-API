@@ -1,19 +1,36 @@
 const express = require('express');
+const morgan = require('morgan');
+
+const toursRouter = require('./routes/toursRouter');
+const usersRouter = require('./routes/usersRouter');
 
 const app = express()
-const port = 3000
+const URL = '/api/v1'
 
-app.get('/', (req, res) => {
-    res.status(200).json({
-        app: 'Natours',
-        message: 'Hello from server side'
-    });
+// MIDDLEWARE
+
+app.use(morgan('dev'));
+app.use(express.json());
+
+// app.use((req, res, next) => {
+//     console.log("hi from the mw!")
+//     next()
+// });
+
+app.use((req, res, next) => {
+    req.requestTime = new Date().toISOString()
+    next()
 });
 
-app.post('/', (req, res) => {
-    res.status(200).send('Post response');
-});
+// SERVER
 
-app.listen(port, () => {
-    console.log(`App running on port ${port}`)
-});
+// app.listen(port, () => {
+//     console.log(`App running on port ${port}`)
+// });
+
+// ROUTERS
+
+app.use(`${URL}/tours`, toursRouter);
+app.use(`${URL}/users`, usersRouter);
+
+module.exports = app;
