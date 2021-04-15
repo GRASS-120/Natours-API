@@ -8,13 +8,12 @@ const app = express();
 const URL = '/api/v1';
 
 // MIDDLEWARE
-
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-app.use(express.json());
-app.use(express.static('./public'));
+app.use(express.json()); // ?
+app.use(express.static('./public')); // ?
 
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
