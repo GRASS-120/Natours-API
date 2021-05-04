@@ -1,6 +1,9 @@
 const express = require('express');
 const morgan = require('morgan');
 
+const ApiError = require('./utils/appError');
+const globalErrorController = require('./controllers/errorController');
+
 const toursRouter = require('./routes/toursRouter');
 const usersRouter = require('./routes/usersRouter');
 
@@ -23,5 +26,12 @@ app.use((req, res, next) => {
 // ROUTERS
 app.use(`${URL}/tours`, toursRouter);
 app.use(`${URL}/users`, usersRouter);
+
+// MIDDLEWARE
+app.all('*', (req, res, next) => {
+  next(new ApiError(`Can't find ${req.originalUrl} on this server!`, 404)); // если что-то передается в next(), то mw распознается как обработчик ошибок и сразу его выполняет вне очереди*
+});
+
+app.use(globalErrorController);
 
 module.exports = app;
