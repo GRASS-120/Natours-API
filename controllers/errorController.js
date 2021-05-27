@@ -43,6 +43,16 @@ const handleValidationErrorDB = (error) => {
   return new AppError(message, 400);
 };
 
+const handleJwtError = () => {
+  const message = `Invalid token. Please log in again!`;
+  return new AppError(message, 401);
+};
+
+const handleJwtExpiredError = () => {
+  const message = `Your token has expired. Please log in again!`;
+  return new AppError(message, 401);
+};
+
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
@@ -53,10 +63,17 @@ module.exports = (err, req, res, next) => {
     // обработка ошибок из ДБ:
     let error = { name: err.name, ...err };
 
+    // switch(error.name) {
+    //   case 'CastError': error = handleCastErrorDB(error),
+    //   case 'ValidationError': error = handleDuplicateFieldsDB(error), // MongoError
+    // }
+
     if (error.name === 'CastError') error = handleCastErrorDB(error);
     if (error.code === 11000) error = handleDuplicateFieldsDB(error); // MongoError
     if (error.name === 'ValidationError')
       error = handleValidationErrorDB(error);
+    if (error.name === 'JsonWebTokenError') error = handleJwtError();
+    if (error.name === 'TokenExpiredError') error = handleJwtExpiredError();
 
     sendErrorProd(error, res);
   }

@@ -29,7 +29,8 @@ app.use(`${URL}/users`, usersRouter);
 
 // MIDDLEWARE
 app.all('*', (req, res, next) => {
-  next(new ApiError(`Can't find ${req.originalUrl} on this server!`, 404)); // если что-то передается в next(), то mw распознается как обработчик ошибок и сразу его выполняет вне очереди*
+  // если что-то передается в next(), то mw распознается как обработчик ошибок и сразу его выполняет вне очереди*
+  next(new ApiError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
 app.use(globalErrorController);
