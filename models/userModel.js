@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const { isEmail } = require('validator');
 const bcrypt = require('bcryptjs');
@@ -22,6 +23,16 @@ const userSchema = new mongoose.Schema({
     minlength: 7,
     maxlength: 30,
     select: false, // делает поле невидимым при выводе данных (например в postman)
+  },
+  role: {
+    type: String,
+    enum: ['user', 'guide', 'lead-guide', 'admin'],
+    default: 'user',
+  },
+  active: {
+    type: Boolean,
+    default: true,
+    select: false,
   },
   passwordConfirmation: {
     type: String,
@@ -50,7 +61,12 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// методы доступны там, где исп данная модель*
+userSchema.pre(/^find/, function (next) {
+  this.find({ active: true });
+  next();
+});
+
+// ! методы доступны там, где исп данная модель*
 // метод для проверки сходства пароля
 userSchema.methods.correctPassword = async function (
   potentialPassword,
@@ -65,11 +81,19 @@ userSchema.methods.passwordIsModified = async function (JWTTimestamp) {
       this.passwordChangedAt.getTime() / 1000,
       10
     );
-    console.log(changedTimestamp, JWTTimestamp);
+    // console.log(changedTimestamp, JWTTimestamp);
     return JWTTimestamp < changedTimestamp;
   }
 
   return false;
+};
+
+userSchema.methods.generatePasswordResetToken = async function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  return resetToken;
 };
 
 const User = mongoose.model('User', userSchema);

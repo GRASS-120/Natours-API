@@ -11,6 +11,30 @@ const signToken = (id) =>
     expiresIn: process.env.JWT_EXPIRES_TIME,
   });
 
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIES_EXPIRES_TIME * 24 * 60 * 60 * 1000
+    ),
+    secure: false,
+    httpOnly: true,
+  };
+
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  res.cookie('jwt', token, cookieOptions);
+
+  user.password = undefined;
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
+  });
+};
+
 exports.signup = catchAsync(async (req, res) => {
   const newUser = await User.create({
     name: req.body.name,
@@ -18,17 +42,10 @@ exports.signup = catchAsync(async (req, res) => {
     password: req.body.password,
     passwordConfirmation: req.body.passwordConfirmation,
     passwordChangedAt: req.body.passwordChangedAt,
+    role: req.body.role,
   });
 
-  const token = signToken(newUser._id);
-
-  res.status(201).json({
-    status: 'success',
-    token,
-    data: {
-      user: newUser,
-    },
-  });
+  createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -47,12 +64,13 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   // 3) if everything is ok, send token to client
-  const token = signToken(user._id);
+  createSendToken(user, 200, res);
+  // const token = signToken(user._id);
 
-  res.status(200).json({
-    status: 'success',
-    token,
-  });
+  // res.status(200).json({
+  //   status: 'success',
+  //   token,
+  // });
 });
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -97,4 +115,47 @@ exports.protect = catchAsync(async (req, res, next) => {
   // GRANT ACCESS TO PROTECTED ROUTE
   req.user = currentUser;
   next();
+});
+
+exports.restrict = (...roles) =>
+  catchAsync(async (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      next(
+        new AppError('You do not have permission to perform this action', 403)
+      );
+    }
+    next();
+  });
+
+// ! -----------------------
+
+// ! это на потом
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  // 1) Get user based on POSTed email
+  const user = User.findOne({ email: req.user.email });
+  if (!user) {
+    return next(new AppError('There is no user with this email!', 404));
+  }
+});
+
+// ! это на потом
+exports.resetPassword = (req, res, next) => {};
+
+// ! -----------------------
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  const { password, passwordCurrent, passwordConfirmation } = req.body;
+  const user = await User.findById(req.user.id).select('+password');
+
+  console.log(req.body);
+
+  if (!(await user.correctPassword(passwordCurrent, user.password))) {
+    return next(new AppError('Password is not correct!', 401));
+  }
+
+  user.password = password;
+  user.passwordConfirm = passwordConfirmation;
+  await user.save();
+
+  createSendToken(user, 200, res);
 });
