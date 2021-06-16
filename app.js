@@ -12,6 +12,7 @@ const globalErrorController = require('./controllers/errorController');
 
 const toursRouter = require('./routes/toursRouter');
 const usersRouter = require('./routes/usersRouter');
+const reviewsRouter = require('./routes/reviewRouter');
 
 const app = express();
 const URL = '/api/v1';
@@ -67,6 +68,7 @@ app.use((req, res, next) => {
 // ROUTERS
 app.use(`${URL}/tours`, toursRouter);
 app.use(`${URL}/users`, usersRouter);
+app.use(`${URL}/reviews`, reviewsRouter);
 
 // MIDDLEWARE
 app.all('*', (req, res, next) => {
